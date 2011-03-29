@@ -1,27 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Text;
-using Microsoft.Win32;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Collections.ObjectModel;
-using System.Xml;
-using System.Xml.Serialization;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
+using Microsoft.Win32;
+using PaperBag.Parsers;
 
 namespace PaperBag
 {
-    public class DemoMover : INotifyPropertyChanged
+    public class DemoMover : INotifyPropertyChanged, IDisposable
     {
         public readonly string SteamPath;
-
-        static Regex
-            AppIDRegex = new Regex("(\"?)SteamAppId(\"?)(\\s+)(\"?)([0-9]+)(\"?)", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-            GameRegex = new Regex("(\"?)game(\"?)(\\s+)\\\"(.+?)\\\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         internal const string
             GameMapFilename = "Games.xml",
@@ -54,6 +46,22 @@ namespace PaperBag
         {
             using (var steamKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\VALVE\\STEAM"))
                 SteamPath = Path.Combine((string)steamKey.GetValue("STEAMPATH"), "steamapps");
+
+            Trace.Assert(Directory.Exists(SteamPath), "Could not load Steam installation path from registry");
+        }
+        ~DemoMover()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        protected void Dispose(bool disposing)
+        {
+            Save();
         }
 
         public void DemoFound(object sender, FileSystemEventArgs e, Func<bool> shouldCompress)
@@ -83,7 +91,7 @@ namespace PaperBag
                 if (!Directory.Exists(dated_demo_dir))
                     Directory.CreateDirectory(dated_demo_dir);
 
-                var DEMInfo = DEM.ReadDemoHeader(demoPath);
+                var DEMInfo = DemoHeader.Read(demoPath);
 
                 bool manualDemo = !fileName.Contains(AutoDemoPrefix);
                 var newPath = Path.Combine(dated_demo_dir,
@@ -114,6 +122,7 @@ namespace PaperBag
             CurrentGameMap = null;
         }
 
+        #region XML Serialization
         GameMap Load()
         {
             var XS = new XmlSerializer(typeof(GameMap));
@@ -127,6 +136,7 @@ namespace PaperBag
             using (var mapWriter = new StreamWriter(GameMapFilename))
                 XS.Serialize(mapWriter, _loaded_GameMap);
         }
+        #endregion
 
         List<string> _game_dirs = null;
         public List<string> GameDirs
@@ -153,38 +163,7 @@ namespace PaperBag
                     CurrentGameMap = Load();
                 else
                 {
-                    List<string> gameInfos = new List<string>();
-
-                    foreach (var dir in GameDirs)
-                        gameInfos.AddRange(Directory.EnumerateFiles(dir, "GameInfo.txt", SearchOption.TopDirectoryOnly));
-
-                    var gameDict = new Dictionary<string, SerializableDictionary<string, int>>();
-                    foreach (var file in gameInfos)
-                    {
-                        int appID = 0;
-                        string game = "";
-
-                        Match appIDMatch, gameMatch;
-
-                        using (var reader = new StreamReader(file))
-                            while (!reader.EndOfStream && (appID == 0 || game == ""))
-                            {
-                                var line = reader.ReadLine();
-                                if (appID == 0 && (appIDMatch = AppIDRegex.Match(line)).Success)
-                                    appID = int.Parse(appIDMatch.Groups[5].Value);
-                                if (game == "" && (gameMatch = GameRegex.Match(line)).Success)
-                                    game = gameMatch.Groups[4].Value;
-                            }
-
-                        if (appID > 0 && !string.IsNullOrWhiteSpace(game))
-                        {
-                            if (!gameDict.ContainsKey(game))
-                                gameDict.Add(game, new SerializableDictionary<string, int>());
-                            gameDict[game].Add(Path.GetDirectoryName(file), appID);
-                        }
-                    }
-
-                    CurrentGameMap = new GameMap { Games = new ObservableCollection<Game>(gameDict.Select((kvp) => new Game { Name = kvp.Key, Paths = kvp.Value })) };
+                    CurrentGameMap = BuildGameMap();
                     Save();
                 }
 
@@ -199,6 +178,28 @@ namespace PaperBag
                         PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs("CurrentGameMap"));
                     }
             }
+        }
+
+        GameMap BuildGameMap()
+        {
+            var gameDict = new Dictionary<string, SerializableDictionary<string, int>>();
+
+            var gameInfoPaths = new List<string>();
+            foreach (var dir in GameDirs)
+                gameInfoPaths.AddRange(Directory.EnumerateFiles(dir, "GameInfo.txt", SearchOption.TopDirectoryOnly));
+
+            foreach (var gameInfo in gameInfoPaths.Select(path => new GameInfo(path)))
+                if (gameInfo.AppID > 0 && !string.IsNullOrWhiteSpace(gameInfo.Game))
+                {
+                    if (!gameDict.ContainsKey(gameInfo.Game))
+                        gameDict.Add(gameInfo.Game, new SerializableDictionary<string, int>());
+                    gameDict[gameInfo.Game].Add(Path.GetDirectoryName(gameInfo.Path), gameInfo.AppID);
+                }
+
+            return new GameMap
+            {
+                Games = new System.Collections.ObjectModel.ObservableCollection<Game>(gameDict.Select(kvp => new Game { Name = kvp.Key, Paths = kvp.Value }))
+            };
         }
 
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;

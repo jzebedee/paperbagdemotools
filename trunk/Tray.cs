@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
+//David Anson's minimize-to-tray implementation
 namespace PaperBag
 {
     /// <summary>
