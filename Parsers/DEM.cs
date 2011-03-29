@@ -5,10 +5,10 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace PaperBag
+namespace PaperBag.Parsers
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public struct DEM
+    public struct DemoHeader
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
         public string Header;
@@ -30,11 +30,11 @@ namespace PaperBag
         public int Frames;
         public int SignOnLength;
 
-        public static DEM ReadDemoHeader(string demoPath)
+        public static DemoHeader Read(string demoPath)
         {
             using (var demoStream = new FileStream(demoPath, FileMode.Open))
             using (var demoReader = new BinaryReader(demoStream))
-                return demoReader.Read<DEM>();
+                return demoReader.Read<DemoHeader>();
         }
     }
 }
