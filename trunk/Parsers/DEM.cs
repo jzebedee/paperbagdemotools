@@ -8,7 +8,7 @@ using System.Text;
 namespace PaperBag.Parsers
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public struct DemoHeader
+    class DemoHeaderReader
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
         public string Header;
@@ -29,6 +29,48 @@ namespace PaperBag.Parsers
         public int Ticks;
         public int Frames;
         public int SignOnLength;
+    }
+
+    
+    public class DemoHeader
+    {
+        private readonly DemoHeaderReader source;
+        private DemoHeader(DemoHeaderReader source)
+        {
+            this.source = source;
+        }
+
+        public TimeSpan Length
+        {
+            get
+            {
+                return TimeSpan.FromSeconds(source.PlaybackTime);
+            }
+        }
+
+        public string MapName
+        {
+            get
+            {
+                return source.MapName;
+            }
+        }
+
+        public string PlayerName
+        {
+            get
+            {
+                return source.ClientName;
+            }
+        }
+
+        public string Server
+        {
+            get
+            {
+                return source.ServerName;
+            }
+        }
 
         public static DemoHeader Read(string demoPath)
         {

@@ -9,7 +9,7 @@ namespace PaperBag
 {
     public static class Extensions
     {
-        public static T Read<T>(this BinaryReader reader, int? Size = null) where T : struct
+        public static T Read<T>(this BinaryReader reader, int? Size = null)
         {
             int structSize = Size ?? Marshal.SizeOf(typeof(T));
             byte[] readBytes = reader.ReadBytes(structSize);

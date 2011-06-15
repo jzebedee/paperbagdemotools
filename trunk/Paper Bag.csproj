@@ -50,10 +50,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
@@ -70,13 +68,12 @@
       <DependentUpon>DemoViewer.xaml</DependentUpon>
     </Compile>
     <Compile Include="Game.cs" />
+    <Compile Include="GameMap.cs" />
     <Compile Include="Parsers\GameInfo.cs" />
     <Compile Include="GameList.xaml.cs">
       <DependentUpon>GameList.xaml</DependentUpon>
     </Compile>
-    <Compile Include="GameMap.cs" />
     <Compile Include="KeyBindings.cs" />
-    <Compile Include="SerializableDictionary.cs" />
     <Compile Include="StructReader.cs" />
     <Compile Include="Tray.cs" />
     <Page Include="DemoViewer.xaml">
