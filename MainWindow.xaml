@@ -11,6 +11,7 @@
         SizeToContent="WidthAndHeight"
         
         Loaded="Window_Loaded"
+        Closed="Window_Closed"
         
         Icon="/Paper%20Bag;component/Images/paperbag.png">
     <Window.Resources>
@@ -28,7 +29,7 @@
         </Style>
     </Window.Resources>
 
-    <StackPanel Orientation="Vertical" DataContext="{Binding CurrentGameMap.Games}">
+    <StackPanel Orientation="Vertical" DataContext="{Binding CurrentGameMap.Map}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

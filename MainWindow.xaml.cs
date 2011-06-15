@@ -37,6 +37,11 @@ namespace PaperBag
             MinHeight = ActualHeight;
         }
 
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            DemoMover.Instance.Dispose();
+        }
+
         private void Button_ReloadGames_Click(object sender, RoutedEventArgs e)
         {
             DemoMover.Instance.RecreateMap();
@@ -44,7 +49,11 @@ namespace PaperBag
 
         private void Button_ViewDemos_Click(object sender, RoutedEventArgs e)
         {
-            new DemoViewer().ShowDialog();
+            var game = GameList.SelectedItem as Game;
+            if (game == null)
+                return;
+
+            new DemoViewer(game).ShowDialog();
         }
     }
 }

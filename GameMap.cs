@@ -1,16 +1,39 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 namespace PaperBag
 {
-    [XmlRoot("GameMap")]
+    [Serializable]
     public class GameMap
     {
-        [XmlArray]
-        public ObservableCollection<Game> Games { get; set; }
+        public ObservableCollection<Game> Map { get; private set; }
+        public GameMap(IEnumerable<Game> games)
+        {
+            Map = new ObservableCollection<Game>(games);
+        }
+
+        public void Save(string path)
+        {
+            using (var outstream = File.OpenWrite(path))
+            {
+                var formatter = new BinaryFormatter();
+                formatter.Serialize(outstream, this);
+            }
+        }
+
+        public static GameMap Load(string path)
+        {
+            using (var instream = File.OpenRead(path))
+            {
+                var formatter = new BinaryFormatter();
+                return formatter.Deserialize(instream) as GameMap;
+            }
+        }
     }
 }

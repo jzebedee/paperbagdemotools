@@ -3,41 +3,47 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
 
 namespace PaperBag
 {
-    [XmlRoot("Game")]
+    [Serializable]
     public class Game
     {
-        DemoMover Parent = DemoMover.Instance;
+        [NonSerialized]
+        const string
+            ScriptFilename = "paperbag.cfg",
+            execLine = "exec " + ScriptFilename;
+
+        DemoMover Mover
+        {
+            get
+            {
+                return DemoMover.Instance;
+            }
+        }
+
         public Game()
         {
-            Parent.PropertyChanged += Parent_PropertyChanged;
+            Mover.PropertyChanged += Parent_PropertyChanged;
         }
         ~Game()
         {
-            Parent.PropertyChanged -= Parent_PropertyChanged;
+            Mover.PropertyChanged -= Parent_PropertyChanged;
         }
 
         void Parent_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == "CurrentGameMap" && Parent.CurrentGameMap != null)
+            if (e.PropertyName == "CurrentGameMap" && Mover.CurrentGameMap != null)
                 Apply();
         }
 
-        [XmlElement]
         public string Name { get; set; }
-        [XmlElement]
-        public SerializableDictionary<string, int> Paths { get; set; }
+        public IEnumerable<string> Paths { get; set; }
 
-        [XmlAttribute]
         public bool Compress { get; set; }
 
         bool _enabled = true;
-        [XmlAttribute]
+
         public bool Enabled
         {
             get
@@ -56,7 +62,6 @@ namespace PaperBag
             _bind_StopDemo = null,
             _bind_StartDemo = null;
 
-        [XmlElement]
         public string Bind_AddMarker
         {
             get
@@ -69,7 +74,7 @@ namespace PaperBag
                 UpdateConfig(true);
             }
         }
-        [XmlElement]
+
         public string Bind_StopDemo
         {
             get
@@ -82,7 +87,7 @@ namespace PaperBag
                 UpdateConfig(true);
             }
         }
-        [XmlElement]
+
         public string Bind_StartDemo
         {
             get
@@ -107,16 +112,16 @@ namespace PaperBag
                 MoveLooseDemos();
             }
 
-            foreach (var path in Paths.Keys)
-                if (!Parent.Watches.ContainsKey(path))
+            foreach (var path in Paths)
+                if (!Mover.Watches.ContainsKey(path))
                 {
                     var watcher = new FileSystemWatcher(path, "*.dem") { EnableRaisingEvents = Enabled };
-                    watcher.Changed += (sender, e) => Parent.DemoFound(sender, e, () => Compress);
+                    watcher.Changed += (sender, e) => Mover.DemoFound(sender, e, () => Compress);
 
-                    Parent.Watches.Add(path, watcher);
+                    Mover.Watches.Add(path, watcher);
                 }
                 else
-                    Parent.Watches[path].EnableRaisingEvents = Enabled;
+                    Mover.Watches[path].EnableRaisingEvents = Enabled;
         }
 
         public void MoveLooseDemos()
@@ -124,23 +129,18 @@ namespace PaperBag
             if (Paths == null)
                 return;
 
-            foreach (var path in Paths.Keys)
+            foreach (var path in Paths)
                 foreach (var looseDemo in Directory.EnumerateFiles(path, "*.dem", SearchOption.TopDirectoryOnly))
-                    Parent.ProcessDemo(looseDemo, Compress);
+                    Mover.ProcessDemo(looseDemo, Compress);
         }
-
-        const string
-            ScriptFilename = "paperbag.cfg",
-            execLine = "exec " + ScriptFilename;
 
         public void UpdateConfig(bool Force = false)
         {
             if (Paths == null)
                 return;
 
-            foreach (var KVP in Paths)
+            foreach (var path in Paths)
             {
-                var path = KVP.Key;
                 var cfg_dir = Path.Combine(path, "cfg");
 
                 var script_path = Path.Combine(cfg_dir, ScriptFilename);

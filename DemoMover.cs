@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Microsoft.Win32;
 using PaperBag.Parsers;
 
@@ -16,7 +15,7 @@ namespace PaperBag
         public readonly string SteamPath;
 
         internal const string
-            GameMapFilename = "Games.xml",
+            GameMapFilename = "Games.dat",
             SavedDemoDirectory = "saved_demos",
             DemoExtension = ".dem",
             CompressedDemoExtension = ".cdem",
@@ -24,23 +23,7 @@ namespace PaperBag
 
         public readonly Dictionary<string, FileSystemWatcher> Watches = new Dictionary<string, FileSystemWatcher>();
 
-        #region Singleton
-        static object _instance_lock = new object();
-        static DemoMover _instance = null;
-        public static DemoMover Instance
-        {
-            get
-            {
-                lock (_instance_lock)
-                {
-                    if (_instance == null)
-                        _instance = new DemoMover();
-
-                    return _instance;
-                }
-            }
-        }
-        #endregion
+        public static DemoMover Instance = new DemoMover();
 
         private DemoMover()
         {
@@ -61,7 +44,10 @@ namespace PaperBag
         }
         protected void Dispose(bool disposing)
         {
-            Save();
+            if (disposing) { 
+                if(CurrentGameMap != null)
+                    CurrentGameMap.Save(GameMapFilename);
+            }
         }
 
         public void DemoFound(object sender, FileSystemEventArgs e, Func<bool> shouldCompress)
@@ -117,37 +103,32 @@ namespace PaperBag
 
         public void RecreateMap()
         {
+            GameMap
+                oldMap = CurrentGameMap,
+                newMap = new GameMap(BuildGameMap());
+
+            foreach (var game in oldMap.Map)
+            {
+                var newGame = newMap.Map.SingleOrDefault(g => g.Name.Equals(game.Name, StringComparison.InvariantCultureIgnoreCase));
+                if(newGame != null) {
+                    newGame.Bind_AddMarker = game.Bind_AddMarker;
+                    newGame.Bind_StartDemo = game.Bind_StartDemo;
+                    newGame.Bind_StopDemo = game.Bind_StopDemo;
+                    newGame.Compress = game.Compress;
+                    newGame.Enabled = game.Enabled;
+                }
+            }
+
             File.Delete(GameMapFilename);
-            _game_dirs = null;
-            CurrentGameMap = null;
+            CurrentGameMap = newMap;
         }
 
-        #region XML Serialization
-        GameMap Load()
-        {
-            var XS = new XmlSerializer(typeof(GameMap));
-            using (var mapReader = new StreamReader(GameMapFilename))
-                return XS.Deserialize(mapReader) as GameMap;
-        }
-
-        public void Save()
-        {
-            var XS = new XmlSerializer(typeof(GameMap));
-            using (var mapWriter = new StreamWriter(GameMapFilename))
-                XS.Serialize(mapWriter, _loaded_GameMap);
-        }
-        #endregion
-
-        List<string> _game_dirs = null;
-        public List<string> GameDirs
+        public IEnumerable<string> GameDirs
         {
             get
             {
-                if (_game_dirs == null)
-                    _game_dirs = (from d in Directory.EnumerateDirectories(SteamPath, "cfg", SearchOption.AllDirectories)
-                                  select Path.GetDirectoryName(d)).ToList();
-
-                return _game_dirs;
+                return from d in Directory.EnumerateDirectories(SteamPath, "cfg", SearchOption.AllDirectories)
+                       select Path.GetDirectoryName(d);
             }
         }
 
@@ -160,11 +141,11 @@ namespace PaperBag
                     return _loaded_GameMap;
 
                 if (File.Exists(GameMapFilename))
-                    CurrentGameMap = Load();
+                    CurrentGameMap = GameMap.Load(GameMapFilename);
                 else
                 {
-                    CurrentGameMap = BuildGameMap();
-                    Save();
+                    var newMap = new GameMap(BuildGameMap());
+                    CurrentGameMap = newMap;
                 }
 
                 return _loaded_GameMap;
@@ -180,9 +161,9 @@ namespace PaperBag
             }
         }
 
-        GameMap BuildGameMap()
+        IEnumerable<Game> BuildGameMap()
         {
-            var gameDict = new Dictionary<string, SerializableDictionary<string, int>>();
+            var gameDict = new Dictionary<string, HashSet<string>>();
 
             var gameInfoPaths = new List<string>();
             foreach (var dir in GameDirs)
@@ -192,14 +173,11 @@ namespace PaperBag
                 if (gameInfo.AppID > 0 && !string.IsNullOrWhiteSpace(gameInfo.Game))
                 {
                     if (!gameDict.ContainsKey(gameInfo.Game))
-                        gameDict.Add(gameInfo.Game, new SerializableDictionary<string, int>());
-                    gameDict[gameInfo.Game].Add(Path.GetDirectoryName(gameInfo.Path), gameInfo.AppID);
+                        gameDict.Add(gameInfo.Game, new HashSet<string>());
+                    gameDict[gameInfo.Game].Add(Path.GetDirectoryName(gameInfo.Path));
                 }
 
-            return new GameMap
-            {
-                Games = new System.Collections.ObjectModel.ObservableCollection<Game>(gameDict.Select(kvp => new Game { Name = kvp.Key, Paths = kvp.Value }))
-            };
+            return gameDict.Select(kvp => new Game { Name = kvp.Key, Paths = kvp.Value });
         }
 
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
