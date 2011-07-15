@@ -103,14 +103,11 @@ namespace PaperBag
 
         public void Apply()
         {
-            if (Paths == null)
+            if (Paths == null || !Enabled)
                 return;
 
-            if (Enabled)
-            {
-                UpdateConfig();
-                MoveLooseDemos();
-            }
+            UpdateConfig();
+            MoveLooseDemos();
 
             foreach (var path in Paths)
                 if (!Mover.Watches.ContainsKey(path))

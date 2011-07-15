@@ -10,7 +10,7 @@ using System.Text;
 namespace PaperBag
 {
     [Serializable]
-    public class GameMap
+    public class GameMap : IDeserializationCallback
     {
         public ObservableCollection<Game> Map { get; private set; }
         public GameMap(IEnumerable<Game> games)
@@ -33,6 +33,18 @@ namespace PaperBag
             {
                 var formatter = new BinaryFormatter();
                 return formatter.Deserialize(instream) as GameMap;
+            }
+        }
+
+        public void OnDeserialization(object sender)
+        {
+            if (Map != null)
+            {
+                foreach (var game in Map)
+                {
+                    if (game != null)
+                        game.Apply();
+                }
             }
         }
     }
