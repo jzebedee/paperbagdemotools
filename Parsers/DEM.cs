@@ -76,7 +76,7 @@ namespace PaperBag.Parsers
         {
             using (var demoStream = new FileStream(demoPath, FileMode.Open))
             using (var demoReader = new BinaryReader(demoStream))
-                return demoReader.Read<DemoHeader>();
+                return new DemoHeader(demoReader.Read<DemoHeaderReader>());
         }
     }
 }
