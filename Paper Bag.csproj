@@ -43,6 +43,9 @@
     <StartupObject>PaperBag.App</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="protobuf-net">
+      <HintPath>.\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="SevenZipSharp">
       <HintPath>.\SevenZipSharp.dll</HintPath>
     </Reference>
@@ -56,6 +59,7 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -64,9 +68,6 @@
     <Compile Include="App.cs" />
     <Compile Include="FileCompression.cs" />
     <Compile Include="DemoMover.cs" />
-    <Compile Include="DemoViewer.xaml.cs">
-      <DependentUpon>DemoViewer.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Game.cs" />
     <Compile Include="GameMap.cs" />
     <Compile Include="Parsers\GameInfo.cs" />
@@ -76,10 +77,6 @@
     <Compile Include="KeyBindings.cs" />
     <Compile Include="StructReader.cs" />
     <Compile Include="Tray.cs" />
-    <Page Include="DemoViewer.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="GameList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

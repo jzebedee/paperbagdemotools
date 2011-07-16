@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Runtime.Serialization;
+using ProtoBuf;
 
 namespace PaperBag
 {
-    [Serializable]
+    [ProtoContract]
     public class Game
     {
-        [NonSerialized]
         const string
             ScriptFilename = "paperbag.cfg",
             execLine = "exec " + ScriptFilename;
@@ -37,13 +38,14 @@ namespace PaperBag
                 Apply();
         }
 
+        [ProtoMember(1)]
         public string Name { get; set; }
-        public IEnumerable<string> Paths { get; set; }
 
-        public bool Compress { get; set; }
+        [ProtoMember(2)]
+        public IList<string> Paths { get; set; }
 
         bool _enabled = true;
-
+        [ProtoMember(3)]
         public bool Enabled
         {
             get
@@ -57,11 +59,15 @@ namespace PaperBag
             }
         }
 
+        [ProtoMember(4)]
+        public bool Compress { get; set; }
+
         string
             _bind_AddMarker = null,
             _bind_StopDemo = null,
             _bind_StartDemo = null;
 
+        [ProtoMember(5)]
         public string Bind_AddMarker
         {
             get
@@ -75,6 +81,7 @@ namespace PaperBag
             }
         }
 
+        [ProtoMember(6)]
         public string Bind_StopDemo
         {
             get
@@ -88,6 +95,7 @@ namespace PaperBag
             }
         }
 
+        [ProtoMember(7)]
         public string Bind_StartDemo
         {
             get

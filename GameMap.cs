@@ -1,29 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
+using ProtoBuf;
 
 namespace PaperBag
 {
-    [Serializable]
-    public class GameMap : IDeserializationCallback
+    [ProtoContract]
+    public class GameMap
     {
-        public ObservableCollection<Game> Map { get; private set; }
-        public GameMap(IEnumerable<Game> games)
-        {
-            Map = new ObservableCollection<Game>(games);
-        }
+        [ProtoMember(1)]
+        public IList<Game> Map { get; set; }
 
         public void Save(string path)
         {
             using (var outstream = File.OpenWrite(path))
             {
-                var formatter = new BinaryFormatter();
-                formatter.Serialize(outstream, this);
+                Serializer.Serialize(outstream, this);
             }
         }
 
@@ -31,20 +23,7 @@ namespace PaperBag
         {
             using (var instream = File.OpenRead(path))
             {
-                var formatter = new BinaryFormatter();
-                return formatter.Deserialize(instream) as GameMap;
-            }
-        }
-
-        public void OnDeserialization(object sender)
-        {
-            if (Map != null)
-            {
-                foreach (var game in Map)
-                {
-                    if (game != null)
-                        game.Apply();
-                }
+                return Serializer.Deserialize<GameMap>(instream);
             }
         }
     }
