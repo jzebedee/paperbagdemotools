@@ -44,8 +44,9 @@ namespace PaperBag
         }
         protected void Dispose(bool disposing)
         {
-            if (disposing) { 
-                if(CurrentGameMap != null)
+            if (disposing)
+            {
+                if (CurrentGameMap != null)
                     CurrentGameMap.Save(GameMapFilename);
             }
         }
@@ -60,62 +61,65 @@ namespace PaperBag
 
         public void ProcessDemo(string demoPath, bool compress)
         {
-            Task.Factory.StartNew(() =>
+            Task.Factory.StartNew(() => ProcessDemoInternal(demoPath, compress));
+        }
+        private void ProcessDemoInternal(string demoPath, bool compress)
+        {
+            var parent_dir = Path.GetDirectoryName(demoPath);
+            var demo_dir = Path.Combine(parent_dir, SavedDemoDirectory);
+
+            Directory.CreateDirectory(demo_dir);
+
+            var fileInfo = new FileInfo(demoPath);
+            var fileName = fileInfo.Name;
+
+            var demo_date = fileInfo.CreationTime;
+
+            var dated_demo_dir = Path.Combine(demo_dir, demo_date.ToString("yyyy-MM-dd"));
+            Directory.CreateDirectory(dated_demo_dir);
+
+            var DEMInfo = DemoHeader.Read(demoPath);
+
+            bool manualDemo = !fileName.Contains(AutoDemoPrefix);
+            var newPath = Path.Combine(dated_demo_dir,
+                string.Format("{0},{1}{2}",
+                DEMInfo.MapName,
+                manualDemo ? fileName + "," : "",
+                demo_date.ToString("HH-mm-ss")));
+
+            var extension = compress ? CompressedDemoExtension : DemoExtension;
+            if (File.Exists(newPath + extension))
+                newPath += demo_date.ToString("-ffff");
+            newPath += extension;
+
+            if (compress)
             {
-                var parent_dir = Path.GetDirectoryName(demoPath);
-                var demo_dir = Path.Combine(parent_dir, SavedDemoDirectory);
-
-                if (!Directory.Exists(demo_dir))
-                    Directory.CreateDirectory(demo_dir);
-
-                var fileInfo = new FileInfo(demoPath);
-                var fileName = fileInfo.Name;
-
-                var demo_date = fileInfo.CreationTime;
-
-                var dated_demo_dir = Path.Combine(demo_dir, demo_date.ToString("yyyy-MM-dd"));
-                if (!Directory.Exists(dated_demo_dir))
-                    Directory.CreateDirectory(dated_demo_dir);
-
-                var DEMInfo = DemoHeader.Read(demoPath);
-
-                bool manualDemo = !fileName.Contains(AutoDemoPrefix);
-                var newPath = Path.Combine(dated_demo_dir,
-                    string.Format("{0},{1}{2}",
-                    DEMInfo.MapName,
-                    manualDemo ? fileName + "," : "",
-                    demo_date.ToString("HH-mm-ss")));
-
-                var extension = compress ? CompressedDemoExtension : DemoExtension;
-                if (File.Exists(newPath + extension))
-                    newPath += demo_date.ToString("-ffff");
-                newPath += extension;
-
-                if (compress)
-                {
-                    FileCompression.Compress(newPath, demoPath);
-                    File.Delete(demoPath);
-                }
-                else
-                    File.Move(demoPath, newPath);
-            });
+                FileCompression.Compress(newPath, demoPath);
+                File.Delete(demoPath);
+            }
+            else
+                File.Move(demoPath, newPath);
         }
 
         public void RecreateMap()
         {
             GameMap
                 oldMap = CurrentGameMap,
-                newMap = new GameMap(BuildGameMap());
+                newMap = new GameMap() { Map = BuildGameMap() };
 
-            foreach (var game in oldMap.Map)
+            if (oldMap.Map != null)
             {
-                var newGame = newMap.Map.SingleOrDefault(g => g.Name.Equals(game.Name, StringComparison.InvariantCultureIgnoreCase));
-                if(newGame != null) {
-                    newGame.Bind_AddMarker = game.Bind_AddMarker;
-                    newGame.Bind_StartDemo = game.Bind_StartDemo;
-                    newGame.Bind_StopDemo = game.Bind_StopDemo;
-                    newGame.Compress = game.Compress;
-                    newGame.Enabled = game.Enabled;
+                foreach (var game in oldMap.Map)
+                {
+                    var newGame = newMap.Map.SingleOrDefault(g => g.Name.Equals(game.Name, StringComparison.InvariantCultureIgnoreCase));
+                    if (newGame != null)
+                    {
+                        newGame.Bind_AddMarker = game.Bind_AddMarker;
+                        newGame.Bind_StartDemo = game.Bind_StartDemo;
+                        newGame.Bind_StopDemo = game.Bind_StopDemo;
+                        newGame.Compress = game.Compress;
+                        newGame.Enabled = game.Enabled;
+                    }
                 }
             }
 
@@ -144,7 +148,7 @@ namespace PaperBag
                     CurrentGameMap = GameMap.Load(GameMapFilename);
                 else
                 {
-                    var newMap = new GameMap(BuildGameMap());
+                    var newMap = new GameMap() { Map = BuildGameMap() };
                     CurrentGameMap = newMap;
                 }
 
@@ -161,7 +165,7 @@ namespace PaperBag
             }
         }
 
-        IEnumerable<Game> BuildGameMap()
+        IList<Game> BuildGameMap()
         {
             var gameDict = new Dictionary<string, HashSet<string>>();
 
@@ -177,7 +181,7 @@ namespace PaperBag
                     gameDict[gameInfo.Game].Add(Path.GetDirectoryName(gameInfo.Path));
                 }
 
-            return gameDict.Select(kvp => new Game { Name = kvp.Key, Paths = kvp.Value });
+            return gameDict.Select(kvp => new Game { Name = kvp.Key, Paths = kvp.Value.ToList() }).ToList();
         }
 
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;

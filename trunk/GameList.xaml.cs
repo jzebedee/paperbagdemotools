@@ -17,7 +17,7 @@ namespace PaperBag
     /// <summary>
     /// Interaction logic for GameList.xaml
     /// </summary>
-    public partial class GameList : ListBox
+    public partial class GameList : UserControl
     {
         public GameList()
         {

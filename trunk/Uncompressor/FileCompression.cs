@@ -19,6 +19,7 @@ namespace Uncompressor
                 CompressionMode = CompressionMode.Create,
                 FastCompression = true,
             };
+            Compressor.CustomParameters.Add("mt", "on"); //Multithreading
 
             Compressor.CompressFiles(outPath, inPaths);
         }

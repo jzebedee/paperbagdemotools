@@ -46,14 +46,5 @@ namespace PaperBag
         {
             DemoMover.Instance.RecreateMap();
         }
-
-        private void Button_ViewDemos_Click(object sender, RoutedEventArgs e)
-        {
-            var game = GameList.SelectedItem as Game;
-            if (game == null)
-                return;
-
-            new DemoViewer(game).ShowDialog();
-        }
     }
 }
