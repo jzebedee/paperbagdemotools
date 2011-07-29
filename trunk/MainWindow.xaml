@@ -17,9 +17,7 @@
         FlowDirection="LeftToRight"
         
         Loaded="Window_Loaded"
-        Closed="Window_Closed"
-        
-        Icon="/Paper%20Bag;component/Images/paperbag.png">
+        Closed="Window_Closed">
     <Window.Resources>
         <Style x:Key="GameEnabledStyle">
             <Setter Property="FrameworkElement.IsEnabled" Value="True"/>
