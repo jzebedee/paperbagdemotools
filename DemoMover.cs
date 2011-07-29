@@ -28,7 +28,8 @@ namespace PaperBag
         private DemoMover()
         {
             using (var steamKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\VALVE\\STEAM"))
-                SteamPath = Path.Combine((string)steamKey.GetValue("STEAMPATH"), "steamapps");
+                if (steamKey != null)
+                    SteamPath = Path.Combine((string)steamKey.GetValue("STEAMPATH"), "steamapps");
 
             Trace.Assert(Directory.Exists(SteamPath), "Could not load Steam installation path from registry");
         }

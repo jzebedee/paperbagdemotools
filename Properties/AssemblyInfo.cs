@@ -8,11 +8,11 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Paper Bag")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Paper Bag is a tool to aid recording, playback, and file management of demos created by Source Engine games")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Scorpioworks")]
 [assembly: AssemblyProduct("Paper Bag")]
-[assembly: AssemblyCopyright("Copyright © scorpion 2010")]
+[assembly: AssemblyCopyright("Copyright © Scorpioworks 2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
