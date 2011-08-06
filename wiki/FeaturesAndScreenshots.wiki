@@ -1,0 +1,17 @@
+#summary Features and Screenshots
+#labels Featured
+
+= Screenshots =
+
+http://i.imgur.com/3h2cP.png
+
+
+= Implemented Features =
+
+  * *Demo save management*: Paper Bag will automatically rename and move new demos to a saved demo folder, and optionally compress them.
+  * *Automatic keybinds*: Paper Bag will allow you to select keybinds for starting and stopping demos, as well as adding demo markers; and will insert these binds into the autoexec.cfg of a selected game.
+
+= Planned Features =
+
+  * API for .NET plugins to perform custom actions when a demo is found (Intended for custom naming schemes, alternate save locations, custom compression, online uploading, etc)
+  * Demo browser to view saved and compressed demos, extract compressed demos, and launch the appropriate game to view them
